@@ -1,5 +1,7 @@
 # vue-cli-component-converter-js
-PHP script that converts vue single components (.vue) to js string 
+PHP script transpiler vue single components (.vue) to js string 
+
+this is php version of vue single components (.vue)
 
 Example :
 
