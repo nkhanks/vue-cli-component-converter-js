@@ -17,7 +17,7 @@ class vueComponent {
 
         $this->component->js = preg_replace("/.*export.*default.*{/m", "", $js);
     }
-    
+
     function extractCSS($script) {
         preg_match("/<style(.*?)>(.*?)<\/style>/ms", $script, $matches, PREG_OFFSET_CAPTURE, 0);
 
@@ -31,9 +31,10 @@ class vueComponent {
         preg_match_all("/.*import.*from(.*)/m", $script, $matches, PREG_OFFSET_CAPTURE, 0);
 
         foreach ($matches[1] as $import) {
+        
             $newComponent = new vueComponent();
 
-            $newComponent->setComponent($import[0]);
+            $newComponent->setComponent(preg_replace('/["\']/', "", trim($import[0])));
             $this->component->components[] = $newComponent->getComponent();
         }
 
@@ -45,10 +46,11 @@ class vueComponent {
             $script = file_get_contents($filename);
             $this->component = new stdClass();
             $this->component->isComponent = true;
-            $this->component->name = pathinfo($filename, PATHINFO_FILENAME);;
+            $this->component->name = pathinfo($filename, PATHINFO_FILENAME);
+            ;
             $script = $this->extractTemplate($script);
             $script = $this->extractScript($script);
-            $script = $this->extractCSS($script);
+            //$script = $this->extractCSS($script);
         } else {
             $this->component = new stdClass();
             $this->component->isComponent = false;
@@ -59,19 +61,31 @@ class vueComponent {
         return $this->component;
     }
 
-    function ceateJS() {
-        $this->component;
+    function convertJS($filename) {
+        $this->setComponent($filename);
+        return $this->createJS($this->component);
+    }
 
+    function createJS($component) {
         $js = "/** VUE COMPONENTS */";
-        if ($this->component->isComponent) {
+        if ($component->isComponent) {
             $js .= "\n Vue.component('{$component->name}',"
                     . "{"
                     . "template: `{$component->template}`,"
                     . "{$component->js}"
                     . ")";
+            if (!empty($component->components)) {
+                foreach ($component->components as $com) {
+                    $js .= $this->createJS($com);
+                }
+            }
         }
-        
-        $this->component->code = $js;
+        return $js;
     }
 
 }
+
+?>
+
+
+
